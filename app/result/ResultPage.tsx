@@ -131,15 +131,11 @@ export default function ResultPage() {
           🎲 Roll Map
         </button>
 
-        {teams.length > 0 && (
-          <ShareButton teams={teams} map={selectedMap} />
-        )}
+        {teams.length > 0 && <ShareButton teams={teams} map={selectedMap} />}
       </div>
 
       {/* Teams + Map */}
-      <div
-        className={`flex items-center justify-center gap-6 flex-wrap`}
-      >
+      <div className="flex items-center justify-center gap-6 flex-wrap">
         {teams.length === 2 ? (
           <>
             <TeamDisplay
