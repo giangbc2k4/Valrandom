@@ -8,44 +8,39 @@ export default function MusicPlayerOverlay() {
 
   const handleStart = () => {
     if (audioRef.current) {
-      audioRef.current.volume = 0.3; // chỉnh nhỏ lại
-      audioRef.current.play()
+      audioRef.current.volume = 0.1;
+      audioRef.current
+        .play()
         .then(() => {
           console.log("🎵 Music started");
-          setUnlocked(true); // ẩn overlay
+          setUnlocked(true);
         })
-        .catch(err => console.error("Cannot play audio:", err));
+        .catch((err) => console.error("Cannot play audio:", err));
     }
   };
 
   return (
     <div className="relative min-h-screen">
-      {/* Audio element */}
       <audio ref={audioRef} loop>
         <source src="/a.mp3" type="audio/mpeg" />
       </audio>
 
-      {/* Overlay hiển thị khi chưa unlock */}
       {!unlocked && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-black/40">
           <button
             onClick={handleStart}
-            className="px-10 py-5 text-2xl font-bold bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg hover:scale-110 transition-transform"
+            className="px-12 py-5 text-3xl font-extrabold text-white 
+                       bg-red-600 hover:bg-red-700 
+                       -skew-x-12 rounded-lg shadow-[0_0_30px_rgba(255,70,85,0.8)]
+                       transform hover:scale-110 hover:shadow-[0_0_50px_rgba(255,70,85,1)] 
+                       transition-all"
           >
-            ▶ Start Experience
+            <span className="inline-block skew-x-12 tracking-wider uppercase">
+              Welcome to Valorant Gacha
+            </span>
           </button>
         </div>
       )}
-
-      {/* Nội dung trang bình thường */}
-      <div className={`${!unlocked ? "pointer-events-none blur-md" : ""}`}>
-        <h1 className="text-4xl text-center mt-20 text-red-500 font-extrabold">
-          🎮 Welcome to Valorant Gacha
-        </h1>
-        <p className="text-center text-gray-300 mt-4">
-         
-        </p>
-      </div>
     </div>
   );
 }

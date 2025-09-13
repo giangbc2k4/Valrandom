@@ -9,7 +9,7 @@ export default function Header() {
 
   return (
     <header className="flex justify-between items-center px-6 py-4 bg-black/40 border-b border-white/10 relative">
-      {/* Logo Valorant với hover glow */}
+    
       <Link href="/" className="flex items-center space-x-2">
         <motion.img
           src="/vlogo.png"
@@ -21,9 +21,9 @@ export default function Header() {
         <span className="text-red-500 font-extrabold text-xl md:text-2xl">Valorant Gacha</span>
       </Link>
 
-      {/* About + Icons */}
+    
       <div className="flex items-center space-x-4 relative">
-        {/* About button */}
+       
         <button
           onClick={() => setAboutOpen(!aboutOpen)}
           onMouseEnter={() => setAboutOpen(true)}
@@ -48,7 +48,7 @@ export default function Header() {
           </AnimatePresence>
         </button>
 
-        {/* GitHub */}
+       
         <a href="https://github.com/giangbc2k4" target="_blank" rel="noopener noreferrer">
           <motion.svg 
             className="w-6 h-6 text-gray-300"
@@ -60,7 +60,7 @@ export default function Header() {
           </motion.svg>
         </a>
 
-        {/* Discord */}
+    
         <a href="https://discord.com/users/jangtran2101" target="_blank" rel="noopener noreferrer">
           <motion.svg
             className="w-6 h-6 text-gray-300"

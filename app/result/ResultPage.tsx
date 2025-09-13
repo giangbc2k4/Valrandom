@@ -25,7 +25,7 @@ type MapInfo = {
   image: string;
 };
 
-// 🔗 Share link
+
 function getShareLink(teams: AssignedPlayer[][], map?: MapInfo) {
   if (typeof window === "undefined") return "";
   const payload = { teams, map };
@@ -62,7 +62,7 @@ export default function ResultPage() {
   const [playerChoices, setPlayerChoices] = useState<PlayerChoice[]>([]);
   const [selectedMap, setSelectedMap] = useState<MapInfo | null>(null);
 
-  // --- Load data from share link or localStorage
+
   useEffect(() => {
     const data = searchParams.get("data");
 
@@ -73,7 +73,7 @@ export default function ResultPage() {
           map?: MapInfo;
         };
 
-        // Chuẩn hóa luôn thành 2D array
+    
         let loadedTeams: AssignedPlayer[][] = [];
         if (Array.isArray(decoded.teams[0])) {
           loadedTeams = decoded.teams as AssignedPlayer[][];
@@ -131,7 +131,7 @@ export default function ResultPage() {
         GACHA RESULT
       </h3>
 
-      {/* Buttons */}
+ 
       <div className="flex justify-center gap-6 mb-10 flex-wrap">
         <button
           onClick={reroll}
@@ -151,7 +151,7 @@ export default function ResultPage() {
 
       </div>
 
-      {/* Teams + Map */}
+
       <div className="flex items-center justify-center gap-6 flex-wrap">
         {teams.length === 2 ? (
           <>
