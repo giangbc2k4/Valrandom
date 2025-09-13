@@ -13,7 +13,7 @@ export default function Home() {
           VALORANT GACHA
         </h1>
         <p className="text-gray-300 text-lg md:text-xl">
-          Tạo đội ngẫu nhiên, cân bằng vai trò 🎮
+          Create random teams with balanced roles 🎮
         </p>
       </div>
 
@@ -22,18 +22,18 @@ export default function Home() {
         <div className="bg-white/5 border border-white/10 rounded-lg p-6 shadow-lg hover:scale-105 hover:shadow-[0_0_20px_rgba(255,70,85,0.5)] transition-transform">
           <div className="text-4xl mb-3">📝</div>
           <h2 className="text-xl font-bold text-red-400 mb-3">Step 1</h2>
-          <p className="text-gray-300">Nhập tên cho từng người chơi trong đội của bạn.</p>
+          <p className="text-gray-300">Enter the names of each player on your team.</p>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-lg p-6 shadow-lg hover:scale-105 hover:shadow-[0_0_20px_rgba(255,70,85,0.5)] transition-transform">
           <div className="text-4xl mb-3">🎯</div>
           <h2 className="text-xl font-bold text-red-400 mb-3">Step 2</h2>
-          <p className="text-gray-300">Chọn vai trò nếu muốn, hoặc để hệ thống tự chọn.</p>
+          <p className="text-gray-300">Choose roles if you want, or let the system assign them.</p>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-lg p-6 shadow-lg hover:scale-105 hover:shadow-[0_0_20px_rgba(255,70,85,0.5)] transition-transform">
           <div className="text-4xl mb-3">🎲</div>
           <h2 className="text-xl font-bold text-red-400 mb-3">Step 3</h2>
           <p className="text-gray-300">
-            Nhận ngay một đội hình ngẫu nhiên, cân bằng role!
+            Instantly get a randomized team with balanced roles!
           </p>
         </div>
       </div>
@@ -43,10 +43,8 @@ export default function Home() {
         onClick={() => router.push("/players")}
         className="px-12 py-4 text-xl font-bold bg-red-600 hover:bg-red-700 transform hover:scale-110 hover:shadow-[0_0_30px_rgba(255,70,85,0.8)] transition-all shadow-[0_0_20px_rgba(255,70,85,0.6)] -skew-x-12 rounded-lg"
       >
-        <span className="inline-block skew-x-12">Bắt đầu</span>
+        <span className="inline-block skew-x-12">Get Started</span>
       </button>
-
-
     </div>
   );
 }

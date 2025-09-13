@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header"; // client component
-
+import MusicPlayer from "./components/MusicPlayer";
 const beVietnam = Be_Vietnam_Pro({
   weight: ["400","600","700"],
   subsets: ["vietnamese"],
@@ -21,7 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main className="flex-1">{children}</main>
         <footer className="text-center py-4 text-gray-400 border-t border-white/10">
-          © 2025 Valorant Gacha
+         
+        <MusicPlayer />
         </footer>
       </body>
     </html>
