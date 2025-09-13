@@ -1,6 +1,8 @@
 "use client";
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 export default function Header() {
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -8,7 +10,7 @@ export default function Header() {
   return (
     <header className="flex justify-between items-center px-6 py-4 bg-black/40 border-b border-white/10 relative">
       {/* Logo Valorant với hover glow */}
-      <a href="/" className="flex items-center space-x-2">
+      <Link href="/" className="flex items-center space-x-2">
         <motion.img
           src="https://www.valorantpicker.com/assets/imgs/navbar/v-logo-red.png"
           alt="Valorant Logo"
@@ -17,7 +19,7 @@ export default function Header() {
           transition={{ type: "spring", stiffness: 300 }}
         />
         <span className="text-red-500 font-extrabold text-xl md:text-2xl">Valorant Gacha</span>
-      </a>
+      </Link>
 
       {/* About + Icons */}
       <div className="flex items-center space-x-4 relative">
@@ -29,7 +31,6 @@ export default function Header() {
           className="text-gray-300 hover:text-white font-semibold relative"
         >
           About
-          {/* Tooltip với framer-motion */}
           <AnimatePresence>
             {aboutOpen && (
               <motion.div
