@@ -1,9 +1,16 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,   // bỏ qua ESLint error
-  },
-  typescript: {
-    ignoreBuildErrors: true,   // bỏ qua TypeScript error
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cmsassets.rgpub.io",
+      },
+      {
+        protocol: "https",
+        hostname: "static.wikia.nocookie.net",
+      },
+    ],
   },
 };
 

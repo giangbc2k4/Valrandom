@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import {
   assignAgents,
   AssignedPlayer,
@@ -12,8 +13,20 @@ import agentsData from "../data/agents.json";
 import mapsData from "../data/maps.json";
 import { motion, AnimatePresence } from "framer-motion";
 
+type AgentInfo = {
+  name: string;
+  role: string;
+  image: string;
+  icon: string;
+};
+
+type MapInfo = {
+  name: string;
+  image: string;
+};
+
 // 🔗 Share link
-function getShareLink(teams: AssignedPlayer[][], map?: any) {
+function getShareLink(teams: AssignedPlayer[][], map?: MapInfo) {
   if (typeof window === "undefined") return "";
   const payload = { teams, map };
   const encoded = encodeURIComponent(JSON.stringify(payload));
@@ -25,7 +38,7 @@ function ShareButton({
   map,
 }: {
   teams: AssignedPlayer[][];
-  map?: any;
+  map?: MapInfo;
 }) {
   function copyShareLink() {
     const url = getShareLink(teams, map);
@@ -47,7 +60,7 @@ export default function ResultPage() {
   const searchParams = useSearchParams();
   const [teams, setTeams] = useState<AssignedPlayer[][]>([]);
   const [playerChoices, setPlayerChoices] = useState<PlayerChoice[]>([]);
-  const [selectedMap, setSelectedMap] = useState<any>(null);
+  const [selectedMap, setSelectedMap] = useState<MapInfo | null>(null);
 
   // --- Load data from share link or localStorage
   useEffect(() => {
@@ -55,14 +68,17 @@ export default function ResultPage() {
 
     if (data) {
       try {
-        const decoded = JSON.parse(decodeURIComponent(data));
+        const decoded = JSON.parse(decodeURIComponent(data)) as {
+          teams: AssignedPlayer[][] | AssignedPlayer[];
+          map?: MapInfo;
+        };
 
         // Chuẩn hóa luôn thành 2D array
         let loadedTeams: AssignedPlayer[][] = [];
-        if (decoded.teams) {
-          loadedTeams = Array.isArray(decoded.teams[0])
-            ? decoded.teams
-            : [decoded.teams];
+        if (Array.isArray(decoded.teams[0])) {
+          loadedTeams = decoded.teams as AssignedPlayer[][];
+        } else {
+          loadedTeams = [decoded.teams as AssignedPlayer[]];
         }
 
         setTeams(loadedTeams);
@@ -93,7 +109,7 @@ export default function ResultPage() {
     } catch (err) {
       console.error("Error parsing localStorage data:", err);
     }
-  }, []);
+  }, [searchParams]);
 
   function reroll() {
     if (playerChoices.length === 0) return;
@@ -101,12 +117,12 @@ export default function ResultPage() {
   }
 
   function rollMap() {
-    const map = mapsData[Math.floor(Math.random() * mapsData.length)];
+    const map = mapsData[Math.floor(Math.random() * mapsData.length)] as MapInfo;
     setSelectedMap(map);
   }
 
-  function getAgentInfoByName(name: string) {
-    return (agentsData as any[]).find((a) => a.name === name) || null;
+  function getAgentInfoByName(name: string): AgentInfo | null {
+    return (agentsData as AgentInfo[]).find((a) => a.name === name) || null;
   }
 
   return (
@@ -175,7 +191,7 @@ function TeamDisplay({
 }: {
   team: AssignedPlayer[];
   color: "red" | "blue";
-  getAgentInfoByName: (name: string) => any;
+  getAgentInfoByName: (name: string) => AgentInfo | null;
 }) {
   return (
     <div
@@ -212,12 +228,13 @@ function TeamDisplay({
                 <div className="overflow-hidden rounded-xl h-[380px]">
                   <div
                     className="relative rounded-xl h-full flex flex-col justify-end transform transition hover:scale-105 hover:shadow-2xl"
-                    style={{
-                      backgroundImage: `url("${agentInfo.image}")`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
                   >
+                    <Image
+                      src={agentInfo.image}
+                      alt={agentInfo.name}
+                      fill
+                      className="object-cover rounded-xl"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                     <div className="relative p-4 z-10">
                       <h4 className="text-xl font-bold text-red-400 drop-shadow-lg">
@@ -225,10 +242,11 @@ function TeamDisplay({
                       </h4>
                       <p className="text-gray-200 drop-shadow">{player.name}</p>
                       <div className="mt-3 flex items-center gap-2 bg-gray-900/70 px-3 py-1 rounded-md text-sm w-fit">
-                        <img
+                        <Image
                           src={agentInfo.icon}
                           alt={agentInfo.role}
-                          className="w-4 h-4"
+                          width={16}
+                          height={16}
                         />
                         {agentInfo.role}
                       </div>
@@ -245,7 +263,7 @@ function TeamDisplay({
 }
 
 // ---------- Map Display ----------
-function MapDisplay({ map }: { map: any }) {
+function MapDisplay({ map }: { map: MapInfo }) {
   return (
     <motion.div
       className="w-60 h-80 rounded-2xl overflow-hidden flex-shrink-0 shadow-2xl border-2 border-yellow-400 relative"
@@ -253,10 +271,11 @@ function MapDisplay({ map }: { map: any }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.6 }}
     >
-      <img
+      <Image
         src={map.image}
         alt={map.name}
-        className="w-full h-full object-cover"
+        fill
+        className="object-cover"
       />
       <div className="absolute bottom-0 w-full text-center bg-black/60 text-white py-2 font-bold">
         {map.name}
