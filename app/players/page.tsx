@@ -9,13 +9,13 @@ interface Role {
   icon: string;
 }
 
-// Ví dụ icon role Valorant
+// Icon role Valorant dùng local
 const roles: Role[] = [
-  { name: "Duelist", icon: "https://static.wikia.nocookie.net/valorant/images/f/fd/DuelistClassSymbol.png" },
-  { name: "Initiator", icon: "https://static.wikia.nocookie.net/valorant/images/7/77/InitiatorClassSymbol.png" },
-  { name: "Sentinel", icon: "https://static.wikia.nocookie.net/valorant/images/4/43/SentinelClassSymbol.png" },
-  { name: "Controller", icon: "https://static.wikia.nocookie.net/valorant/images/0/04/ControllerClassSymbol.png" },
-  { name: "Random", icon: "/10.png" }, // tạo icon random nếu muốn
+  { name: "Duelist", icon: "/icons/Du.png" },
+  { name: "Initiator", icon: "/icons/Ini.png" },
+  { name: "Sentinel", icon: "/icons/Sen.png" },
+  { name: "Controller", icon: "/icons/Col.png" },
+  { name: "Random", icon: "/10.png" }, // icon random
 ];
 
 export default function PlayersPage() {
@@ -27,12 +27,13 @@ export default function PlayersPage() {
   const handleTeamCount = (count: 1 | 2) => {
     setTeamCount(count);
     const totalPlayers = count === 1 ? 5 : 10;
-    // Thêm hoặc cắt mảng player
+
     setPlayers((prev) => {
       const newArr = [...prev];
       while (newArr.length < totalPlayers) newArr.push("");
       return newArr.slice(0, totalPlayers);
     });
+
     setPlayerRoles((prev) => {
       const newArr = [...prev];
       while (newArr.length < totalPlayers) newArr.push("Random");
@@ -41,7 +42,6 @@ export default function PlayersPage() {
   };
 
   const handleSubmit = () => {
-    // Nếu tên trống → lấy Player 1,2,...
     const finalPlayers = players.map((p, i) => p.trim() || `Player ${i + 1}`);
     localStorage.setItem("players", JSON.stringify(finalPlayers));
     localStorage.setItem("roles", JSON.stringify(playerRoles));
@@ -50,7 +50,9 @@ export default function PlayersPage() {
 
   return (
     <main className="flex flex-col items-center py-10 px-6 bg-valorant-dark min-h-screen text-white">
-      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-red-500">STEP 1: Assemble your team</h2>
+      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-red-500">
+        STEP 1: Assemble your team
+      </h2>
       <p className="text-gray-400 mb-8 text-center max-w-lg">
         Enter the names of the {teamCount * 5} players. Choose roles or let it be random.
       </p>
@@ -115,14 +117,13 @@ export default function PlayersPage() {
         ))}
       </div>
 
-     <button
-  onClick={handleSubmit}
-  className="mt-8 flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 rounded-lg font-bold transition-all"
->
-
-  NEXT
-  <img src="/ar.png" alt="Confirm" className="w-5 h-5" />
-</button>
+      <button
+        onClick={handleSubmit}
+        className="mt-8 flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 rounded-lg font-bold transition-all"
+      >
+        NEXT
+        <img src="/ar.png" alt="Confirm" className="w-5 h-5" />
+      </button>
     </main>
   );
 }
