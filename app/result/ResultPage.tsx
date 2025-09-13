@@ -147,7 +147,8 @@ export default function ResultPage() {
           🎲 Roll Map
         </button>
 
-        {teams.length > 0 && <ShareButton teams={teams} map={selectedMap} />}
+      {teams.length > 0 && <ShareButton teams={teams} map={selectedMap ?? undefined} />}
+
       </div>
 
       {/* Teams + Map */}
