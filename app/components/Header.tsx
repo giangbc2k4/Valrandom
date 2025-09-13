@@ -12,7 +12,7 @@ export default function Header() {
       {/* Logo Valorant với hover glow */}
       <Link href="/" className="flex items-center space-x-2">
         <motion.img
-          src="https://www.valorantpicker.com/assets/imgs/navbar/v-logo-red.png"
+          src="/vlogo.png"
           alt="Valorant Logo"
           className="w-10 h-10 object-contain"
           whileHover={{ scale: 1.2, filter: "drop-shadow(0 0 10px #ff4655)" }}
