@@ -56,7 +56,7 @@ export const translations = {
     shareResult: "🔗 Share Result",
     loading: "Loading...",
     langLabel: "Language",
-    playersPageTitle: "STEP 1: Add Players",
+    playersPageTitle: "Add Players",
     playersPageHint:
       "Enter player names and optionally choose roles if you want.\nKeep Random to let the system choose roles for you.\nSelect 1 Team to only randomize agents, or 2 Teams if players are already split into two teams.",
     playersPageTip:
