@@ -20,7 +20,7 @@ export default function MusicPlayerOverlay() {
   };
 
   return (
-    <div className="relative min-h-screen">
+    <>
       <audio ref={audioRef} loop>
         <source src="/a.mp3" type="audio/mpeg" />
       </audio>
@@ -36,11 +36,11 @@ export default function MusicPlayerOverlay() {
                        transition-all"
           >
             <span className="inline-block skew-x-12 tracking-wider uppercase">
-              Welcome to Valorant Gacha
+              Welcome to Valorant Random
             </span>
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }

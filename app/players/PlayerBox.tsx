@@ -12,6 +12,7 @@ interface PlayerCardProps {
   onChange: (value: string) => void;
   onRoleChange: (role: string) => void;
   roles: Role[];
+  placeholder?: string;
 }
 
 export default function PlayerCard({
@@ -20,6 +21,7 @@ export default function PlayerCard({
   onChange,
   onRoleChange,
   roles,
+  placeholder = "Player",
 }: PlayerCardProps) {
   const [open, setOpen] = useState(false);
 
@@ -30,7 +32,7 @@ export default function PlayerCard({
         type="text"
         value={player}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Player"
+        placeholder={placeholder}
         className="flex-1 px-3 py-2 bg-black/70 border border-red-500/30 text-white font-semibold placeholder-gray-400 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
       />
 
@@ -43,7 +45,7 @@ export default function PlayerCard({
           <img
             src={roles.find((r) => r.name === role)?.icon || roles[0].icon}
             alt={role}
-            className="w-7 h-7"
+            className={`${role === "Random" ? "w-9 h-9 p-1 rounded-full bg-white/20 shadow" : "w-7 h-7"}`}
           />
         </button>
         {open && (
@@ -57,7 +59,11 @@ export default function PlayerCard({
                   setOpen(false);
                 }}
               >
-                <img src={r.icon} alt={r.name} className="w-5 h-5 mr-2" />
+                <img
+                  src={r.icon}
+                  alt={r.name}
+                  className={`mr-2 ${r.name === "Random" ? "w-6 h-6 p-1 rounded-full bg-white/20 shadow" : "w-5 h-5"}`}
+                />
                 <span className="text-sm">{r.name}</span>
               </div>
             ))}
