@@ -52,14 +52,14 @@ function PlayersContent() {
       const teamA = teams[0] ?? [];
       const teamB = teams[1] ?? [];
 
-      const allNames = [
-        ...teamA.map((p) => p.name),
-        ...teamB.map((p) => p.name),
-      ];
-
-      const filled = Array(10)
-        .fill("")
-        .map((_, idx) => allNames[idx] ?? "");
+      // Keep original team slots: Team A in [0..4], Team B in [5..9]
+      const filled = Array(10).fill("");
+      teamA.slice(0, 5).forEach((p, idx) => {
+        filled[idx] = p.name;
+      });
+      teamB.slice(0, 5).forEach((p, idx) => {
+        filled[idx + 5] = p.name;
+      });
 
       setPlayers(filled);
       setPlayerRoles(Array(10).fill("Random"));
