@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PlayerCard from "./PlayerBox";
 import { translations, useLanguage } from "../lib/i18n";
@@ -18,7 +18,7 @@ const roles: Role[] = [
   { name: "Random", icon: "/Roles/random.png" },
 ];
 
-export default function PlayersPage() {
+function PlayersContent() {
   const router = useRouter();
   const { language } = useLanguage();
   const t = translations[language];
@@ -218,5 +218,17 @@ export default function PlayersPage() {
       
       </button>
     </main>
+  );
+}
+
+export default function PlayersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-valorant-dark text-white">
+        <div className="text-xl">Loading...</div>
+      </div>
+    }>
+      <PlayersContent />
+    </Suspense>
   );
 }
