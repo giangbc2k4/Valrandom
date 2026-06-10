@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07070a;
+  --foreground: #f7f3ee;
+  --valorant-red: #ff4655;
+  --valorant-red-dark: #9f1d2a;
+  --valorant-blue: #35a8ff;
+  --valorant-yellow: #f5c542;
+  --panel: rgba(15, 16, 22, 0.86);
+  --panel-strong: rgba(19, 20, 28, 0.96);
+  --line: rgba(255, 255, 255, 0.12);
 }
 
 @theme inline {
@@ -12,16 +19,142 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 70, 85, 0.18), transparent 28rem),
+    radial-gradient(circle at 86% 18%, rgba(53, 168, 255, 0.12), transparent 26rem),
+    linear-gradient(135deg, #07070a 0%, #101018 46%, #050506 100%);
   color: var(--foreground);
-   font-family: 'Arial Black', sans-serif;
-  letter-spacing: 1px;
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: rgba(255, 70, 85, 0.35);
+}
+
+@layer utilities {
+  .bg-valorant-dark {
+    background:
+      radial-gradient(circle at 18% 8%, rgba(255, 70, 85, 0.14), transparent 28rem),
+      radial-gradient(circle at 82% 16%, rgba(53, 168, 255, 0.1), transparent 24rem),
+      #07070a;
+  }
+
+  .tactical-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(18px);
+  }
+
+  .panel-strong {
+    background: var(--panel-strong);
+    border: 1px solid var(--line);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+  }
+
+  .cut-corners {
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  }
+
+  .valorant-title {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 800;
+  }
+
+  .red-glow {
+    box-shadow: 0 0 30px rgba(255, 70, 85, 0.22);
+  }
+
+  .blue-glow {
+    box-shadow: 0 0 30px rgba(53, 168, 255, 0.2);
+  }
+
+  .agent-stage {
+    perspective: 1100px;
+  }
+
+  .agent-cylinder {
+    transform-style: preserve-3d;
+    animation: agent-cylinder-spin 14s linear infinite;
+  }
+
+  .agent-cylinder:hover {
+    animation-play-state: paused;
+  }
+
+  .agent-cylinder-card {
+    backface-visibility: hidden;
+  }
+
+  .agent-card-frame {
+    background: #07080b;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .agent-stage-frame {
+    background:
+      linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.03) 28%, rgba(255, 255, 255, 0.035) 72%, transparent 100%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 72%);
+  }
+}
+
+@keyframes agent-cylinder-spin {
+  from {
+    transform: translate(-50%, -50%) rotateY(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotateY(-360deg);
+  }
+}
+
+@keyframes teamLand {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-cylinder {
+    animation: none;
+    transform: translate(-50%, -50%) rotateY(-22deg);
+  }
 }

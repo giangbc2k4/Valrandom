@@ -1,6 +1,8 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import PlayerCard from "./PlayerBox";
 import { translations, useLanguage } from "../lib/i18n";
@@ -24,16 +26,10 @@ function PlayersContent() {
   const t = translations[language];
 
   const [teamCount, setTeamCount] = useState<1 | 2>(1);
-
-  // luôn giữ 10 slot nội bộ
   const [players, setPlayers] = useState<string[]>(Array(10).fill(""));
   const [playerRoles, setPlayerRoles] = useState<string[]>(Array(10).fill("Random"));
   const searchParams = useSearchParams();
   const [prefilled, setPrefilled] = useState(false);
-
-  const handleTeamCount = (count: 1 | 2) => {
-    setTeamCount(count);
-  };
 
   useEffect(() => {
     if (prefilled) return;
@@ -48,12 +44,10 @@ function PlayersContent() {
 
       if (!decoded.teams || !Array.isArray(decoded.teams)) return;
 
-      const teams = decoded.teams;
-      const teamA = teams[0] ?? [];
-      const teamB = teams[1] ?? [];
-
-      // Keep original team slots: Team A in [0..4], Team B in [5..9]
+      const teamA = decoded.teams[0] ?? [];
+      const teamB = decoded.teams[1] ?? [];
       const filled = Array(10).fill("");
+
       teamA.slice(0, 5).forEach((p, idx) => {
         filled[idx] = p.name;
       });
@@ -66,7 +60,7 @@ function PlayersContent() {
       setTeamCount(teamB.length > 0 ? 2 : 1);
       setPrefilled(true);
     } catch {
-      // ignore
+      // Keep the manual empty form when shared data is invalid.
     }
   }, [searchParams, prefilled]);
 
@@ -91,143 +85,146 @@ function PlayersContent() {
       : [players.slice(0, 5), players.slice(5, 10)];
 
   return (
-    <main className="flex flex-col items-center py-10 px-6 bg-valorant-dark min-h-screen text-white">
-      {/* Title */}
-      <h2 className="text-2xl md:text-3xl font-bold mb-4 text-red-500">
-        {t.playersPageTitle}
-      </h2>
+    <main className="relative min-h-screen overflow-hidden bg-valorant-dark px-4 py-8 text-white sm:px-6">
+      <div className="absolute inset-0 tactical-grid opacity-35" />
 
-      {/* Guide */}
-      <div className="text-gray-400 text-center max-w-xl mb-8 text-sm leading-relaxed">
-        {t.playersPageHint.split("\n").map((line, index) => (
-          <span key={index}>
-            {line}
-            <br />
-          </span>
-        ))}
-      </div>
+      <div className="relative z-10 mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_320px]">
+        <section className="panel cut-corners p-5 sm:p-6">
+          <div className="mb-6 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 md:flex-row md:items-end">
+            <div>
+              <h1 className="valorant-title text-3xl text-white">{t.playersPageTitle}</h1>
+              <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-6 text-gray-400">
+                {t.playersPageHint}
+              </p>
+            </div>
 
-      {/* Team Mode */}
-      <div className="flex space-x-4 mb-10">
-        <button
-          onClick={() => handleTeamCount(1)}
-          className={`px-5 py-2 font-semibold rounded-sm border transition-colors ${
-            teamCount === 1
-              ? "bg-red-600 border-red-500"
-              : "border-red-500/40 hover:bg-red-600/40"
-          }`}
-        >
-          {t.teamModeOne}
-        </button>
+            <div className="flex w-full border border-white/10 bg-black/35 p-1 md:w-auto">
+              {([1, 2] as const).map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  onClick={() => setTeamCount(count)}
+                  className={`flex-1 px-5 py-2 text-sm font-black uppercase tracking-[0.08em] transition md:flex-none ${
+                    teamCount === count
+                      ? "bg-red-500 text-white"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {count === 1 ? t.teamModeOne : t.teamModeTwo}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <button
-          onClick={() => handleTeamCount(2)}
-          className={`px-5 py-2 font-semibold rounded-sm border transition-colors ${
-            teamCount === 2
-              ? "bg-red-600 border-red-500"
-              : "border-red-500/40 hover:bg-red-600/40"
-          }`}
-        >
-          {t.teamModeTwo}
-        </button>
-      </div>
-
-      {/* Players Group */}
-      <div className="w-full max-w-5xl bg-[#0f0f12] border border-white/10 rounded-2xl p-6 shadow-[0_0_20px_rgba(255,0,0,0.12)] mb-10">
-        <div
-          className={`grid gap-6 ${
-            teamCount === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
-          }`}
-        >
-          {teams.map((teamPlayers, teamIdx) => (
-            <div
-              key={teamIdx}
-              className={`flex flex-col rounded-2xl p-6 shadow-lg border-2 ${
-                teamIdx === 0
-                  ? "border-red-500 bg-black/40"
-                  : "border-blue-500 bg-black/40"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                {teamCount === 2 ? (
-                  <h3
-                    className={`text-xl font-bold ${
-                      teamIdx === 0 ? "text-red-400" : "text-blue-400"
+          <div className={`grid gap-5 ${teamCount === 1 ? "grid-cols-1" : "grid-cols-1 xl:grid-cols-2"}`}>
+            {teams.map((teamPlayers, teamIdx) => (
+              <div
+                key={teamIdx}
+                className={`border p-4 ${
+                  teamIdx === 0
+                    ? "border-red-400/35 bg-red-500/[0.08]"
+                    : "border-blue-400/35 bg-blue-500/[0.08]"
+                }`}
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <h2
+                    className={`text-lg font-black uppercase tracking-[0.08em] ${
+                      teamIdx === 0 ? "text-red-300" : "text-blue-300"
                     }`}
                   >
                     {teamIdx === 0 ? t.teamA : t.teamB}
-                  </h3>
-                ) : (
-                  <h3 className="text-xl font-bold text-red-400">{t.teamA}</h3>
-                )}
-                <span className="text-xs text-gray-400">
-                  {teamPlayers.filter(Boolean).length}/5
-                </span>
+                  </h2>
+                  <span className="text-xs font-bold text-gray-400">
+                    {teamPlayers.filter(Boolean).length}/5
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {teamPlayers.map((p, idx) => {
+                    const globalIdx = teamIdx * 5 + idx;
+
+                    return (
+                      <PlayerCard
+                        key={globalIdx}
+                        player={players[globalIdx]}
+                        role={playerRoles[globalIdx]}
+                        placeholder={t.placeholderPlayer}
+                        roles={roles}
+                        onChange={(val) =>
+                          setPlayers((prev) => {
+                            const newArr = [...prev];
+                            newArr[globalIdx] = val;
+                            return newArr;
+                          })
+                        }
+                        onRoleChange={(val) =>
+                          setPlayerRoles((prev) => {
+                            const newArr = [...prev];
+                            newArr[globalIdx] = val;
+                            return newArr;
+                          })
+                        }
+                      />
+                    );
+                  })}
+                </div>
               </div>
+            ))}
+          </div>
 
-              <div className="space-y-3">
-                {teamPlayers.map((p, idx) => {
-                  const globalIdx = teamIdx * 5 + idx;
+          <div className="mt-6 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 md:flex-row md:items-center">
+            <p className="max-w-lg whitespace-pre-line text-xs leading-5 text-gray-500">{t.playersPageTip}</p>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="flex w-full items-center justify-center gap-2 bg-red-500 px-6 py-3 font-black uppercase tracking-[0.08em] text-white transition hover:bg-red-400 md:w-auto"
+            >
+              {t.nextStep}
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        </section>
 
-                  return (
-                    <PlayerCard
-                      key={globalIdx}
-                      player={players[globalIdx]}
-                      role={playerRoles[globalIdx]}
-                      placeholder={t.placeholderPlayer}
-                      roles={roles}
-                      onChange={(val) =>
-                        setPlayers((prev) => {
-                          const newArr = [...prev];
-                          newArr[globalIdx] = val;
-                          return newArr;
-                        })
-                      }
-                      onRoleChange={(val) =>
-                        setPlayerRoles((prev) => {
-                          const newArr = [...prev];
-                          newArr[globalIdx] = val;
-                          return newArr;
-                        })
-                      }
-                    />
-                  );
-                })}
+        <aside className="panel-strong cut-corners h-fit p-5">
+          <h2 className="valorant-title text-xl text-white">{t.roleGuideTitle}</h2>
+          <p className="mt-3 text-sm leading-6 text-gray-400">{t.roleGuideHint}</p>
+
+          <div className="mt-5 space-y-2">
+            {roles.map((role) => (
+              <div key={role.name} className="flex items-center gap-3 border border-white/10 bg-black/30 px-3 py-3">
+                <Image
+                  src={role.icon}
+                  alt={role.name}
+                  width={28}
+                  height={28}
+                  className={role.name === "Random" ? "rounded-full bg-white/15 p-1" : ""}
+                />
+                <span className="font-semibold text-gray-200">{role.name}</span>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </div>
 
-      {/* Bottom note */}
-      <div className="text-gray-500 text-xs mt-8 text-center max-w-lg">
-        {t.playersPageTip.split("\n").map((line, index) => (
-          <span key={index}>
-            {line}
-            <br />
-          </span>
-        ))}
+          <p className="mt-5 border-l-2 border-red-400 pl-4 text-xs leading-5 text-gray-500">
+            {t.roleRandomNote}
+          </p>
+        </aside>
       </div>
-
-      {/* Next Button */}
-      <button
-        onClick={handleSubmit}
-        className="mt-8 flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 rounded-lg font-bold transition-all"
-      >
-        {t.nextStep}
-      
-      </button>
     </main>
   );
 }
 
 export default function PlayersPage() {
+  const { language } = useLanguage();
+  const t = translations[language];
+
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-valorant-dark text-white">
-        <div className="text-xl">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-valorant-dark text-white">
+          <div className="text-xl">{t.loading}</div>
+        </div>
+      }
+    >
       <PlayersContent />
     </Suspense>
   );

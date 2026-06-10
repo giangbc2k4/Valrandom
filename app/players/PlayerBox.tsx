@@ -1,4 +1,6 @@
 "use client";
+
+import Image from "next/image";
 import { useState } from "react";
 
 interface Role {
@@ -24,48 +26,55 @@ export default function PlayerCard({
   placeholder = "Player",
 }: PlayerCardProps) {
   const [open, setOpen] = useState(false);
+  const selectedRole = roles.find((r) => r.name === role) || roles[0];
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-red-900 via-black to-gray-900 border border-red-500/30 shadow-lg hover:shadow-[0_0_12px_rgba(255,70,85,0.5)] transition-shadow rounded-sm">
-      {/* Player Name Input */}
+    <div className="relative flex items-center gap-3 border border-white/10 bg-black/35 p-3 transition hover:border-red-400/50">
       <input
         type="text"
         value={player}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="flex-1 px-3 py-2 bg-black/70 border border-red-500/30 text-white font-semibold placeholder-gray-400 rounded-sm focus:outline-none focus:ring-1 focus:ring-red-500"
+        className="min-w-0 flex-1 border border-white/10 bg-[#101119] px-3 py-2.5 text-sm font-semibold text-white outline-none transition placeholder:text-gray-500 focus:border-red-400"
       />
 
-      {/* Role Dropdown */}
-      <div className="relative ml-3">
+      <div className="relative">
         <button
-          onClick={() => setOpen(!open)}
-          className="w-12 h-12 rounded-sm bg-black/70 border border-red-500/30 flex items-center justify-center hover:scale-110 hover:shadow-[0_0_8px_rgba(255,70,85,0.5)] transition-transform"
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          className="flex h-11 w-11 items-center justify-center border border-red-400/30 bg-red-500/10 transition hover:border-red-300 hover:bg-red-500/20"
+          aria-label={`Role: ${selectedRole.name}`}
         >
-          <img
-            src={roles.find((r) => r.name === role)?.icon || roles[0].icon}
-            alt={role}
-            className={`${role === "Random" ? "w-9 h-9 p-1 rounded-full bg-white/20 shadow" : "w-7 h-7"}`}
+          <Image
+            src={selectedRole.icon}
+            alt={selectedRole.name}
+            width={28}
+            height={28}
+            className={selectedRole.name === "Random" ? "rounded-full bg-white/15 p-1" : ""}
           />
         </button>
+
         {open && (
-          <div className="absolute right-0 mt-2 w-32 bg-black/90 border border-red-500/30 rounded-sm shadow-lg z-10">
+          <div className="absolute right-0 top-full z-20 mt-2 w-40 border border-white/15 bg-[#101119] p-1 shadow-2xl">
             {roles.map((r) => (
-              <div
+              <button
                 key={r.name}
-                className="flex items-center px-2 py-1 hover:bg-red-600 hover:text-white cursor-pointer"
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-200 transition hover:bg-red-500 hover:text-white"
                 onClick={() => {
                   onRoleChange(r.name);
                   setOpen(false);
                 }}
               >
-                <img
+                <Image
                   src={r.icon}
                   alt={r.name}
-                  className={`mr-2 ${r.name === "Random" ? "w-6 h-6 p-1 rounded-full bg-white/20 shadow" : "w-5 h-5"}`}
+                  width={22}
+                  height={22}
+                  className={r.name === "Random" ? "rounded-full bg-white/15 p-1" : ""}
                 />
-                <span className="text-sm">{r.name}</span>
-              </div>
+                <span>{r.name}</span>
+              </button>
             ))}
           </div>
         )}

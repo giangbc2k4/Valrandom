@@ -7,16 +7,16 @@ export default function MusicPlayerOverlay() {
   const [unlocked, setUnlocked] = useState(false);
 
   const handleStart = () => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.1;
-      audioRef.current
-        .play()
-        .then(() => {
-          console.log("🎵 Music started");
-          setUnlocked(true);
-        })
-        .catch((err) => console.error("Cannot play audio:", err));
-    }
+    if (!audioRef.current) return;
+
+    audioRef.current.volume = 0.1;
+    audioRef.current
+      .play()
+      .then(() => {
+        console.log("Music started");
+        setUnlocked(true);
+      })
+      .catch((err) => console.error("Cannot play audio:", err));
   };
 
   return (
@@ -26,18 +26,13 @@ export default function MusicPlayerOverlay() {
       </audio>
 
       {!unlocked && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-md">
           <button
+            type="button"
             onClick={handleStart}
-            className="px-12 py-5 text-3xl font-extrabold text-white 
-                       bg-red-600 hover:bg-red-700 
-                       -skew-x-12 rounded-lg shadow-[0_0_30px_rgba(255,70,85,0.8)]
-                       transform hover:scale-110 hover:shadow-[0_0_50px_rgba(255,70,85,1)] 
-                       transition-all"
+            className="cut-corners border border-red-300/40 bg-red-500 px-8 py-4 text-xl font-black uppercase tracking-[0.12em] text-white shadow-[0_0_34px_rgba(255,70,85,0.45)] transition hover:bg-red-400 sm:px-12 sm:py-5 sm:text-2xl"
           >
-            <span className="inline-block skew-x-12 tracking-wider uppercase">
-              Welcome to Valorant Random
-            </span>
+            Welcome to Valorant Random
           </button>
         </div>
       )}
