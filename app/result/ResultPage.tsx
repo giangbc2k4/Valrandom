@@ -40,6 +40,13 @@ type Slot = SelectedSlot & {
   player: AssignedPlayer;
 };
 
+type AgentSpinRun = {
+  nonce: number;
+  startIndex: number;
+  steps: number;
+  duration: number;
+};
+
 export default function ResultPage() {
   const { language } = useLanguage();
   const t = translations[language];
@@ -56,6 +63,7 @@ export default function ResultPage() {
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null);
   const [selectedRole, setSelectedRole] = useState<Role>("Random");
   const [uniqueAgentsInMatch, setUniqueAgentsInMatch] = useState(true);
+  const [agentSpinRun, setAgentSpinRun] = useState<AgentSpinRun | null>(null);
   const [rolling, setRolling] = useState(false);
   const [rollingMap, setRollingMap] = useState(false);
 
@@ -109,11 +117,16 @@ export default function ResultPage() {
 
     const storedPlayers = localStorage.getItem("players");
     const storedRoles = localStorage.getItem("roles");
+    const storedTeamNames = localStorage.getItem("teamNames");
 
     if (!storedPlayers || !storedRoles) return;
 
     const p = JSON.parse(storedPlayers) as string[];
     const r = JSON.parse(storedRoles) as string[];
+    if (storedTeamNames) {
+      const names = JSON.parse(storedTeamNames) as string[];
+      if (names.length) setTeamNames([names[0] || "Team A", names[1] || "Team B"]);
+    }
 
     const choices: PlayerChoice[] = p.map((name, idx) => ({
       id: idx,
@@ -201,6 +214,7 @@ export default function ResultPage() {
 
   function selectSlot(slot: SelectedSlot | null, nextTeams = displayTeams) {
     setSelectedSlot(slot);
+    setAgentSpinRun(null);
     if (!slot) {
       setSelectedRole("Random");
       return;
@@ -213,7 +227,8 @@ export default function ResultPage() {
   function selectNextOpenSlot(currentSlot: SelectedSlot, nextTeams: AssignedPlayer[][]) {
     const slots = getDraftSlots(nextTeams);
     if (slots.length === 0) {
-      selectSlot(null, nextTeams);
+      setSelectedSlot(null);
+      setAgentSpinRun(null);
       return;
     }
 
@@ -223,7 +238,8 @@ export default function ResultPage() {
     const ordered = currentIndex >= 0 ? [...slots.slice(currentIndex + 1), ...slots.slice(0, currentIndex + 1)] : slots;
     const nextOpen = ordered.find((slot) => !slot.player.agent);
 
-    selectSlot(nextOpen ? { teamIndex: nextOpen.teamIndex, playerId: nextOpen.playerId } : null, nextTeams);
+    setSelectedSlot(nextOpen ? { teamIndex: nextOpen.teamIndex, playerId: nextOpen.playerId } : null);
+    setAgentSpinRun(null);
   }
 
   function resetManualDraft(nextTeams: AssignedPlayer[][]) {
@@ -241,6 +257,7 @@ export default function ResultPage() {
     const firstSlot = getDraftSlots(resetTeams)[0];
     selectSlot(firstSlot ? { teamIndex: firstSlot.teamIndex, playerId: firstSlot.playerId } : null, resetTeams);
     setCurrentAgentPick(null);
+    setAgentSpinRun(null);
     setAgentDrafting(false);
   }
 
@@ -250,16 +267,21 @@ export default function ResultPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(teams)]);
 
-  function getAgentPool(role: Role, teamIndex: number) {
+  function getAgentPool(role: Role, teamIndex: number, sourceTeams = displayTeams) {
     const allAgents = agentsData as AgentInfo[];
-    const usedPlayers = uniqueAgentsInMatch ? displayTeams.flat() : displayTeams[teamIndex] ?? [];
+    const usedPlayers = uniqueAgentsInMatch ? sourceTeams.flat() : sourceTeams[teamIndex] ?? [];
     const used = new Set(usedPlayers.map((player) => player.agent).filter(Boolean));
     const pool = (role === "Random" ? allAgents : allAgents.filter((agent) => agent.role === role)).filter(
       (agent) => !used.has(agent.name)
     );
-    const fallback = allAgents.filter((agent) => !used.has(agent.name));
 
-    return pool.length > 0 ? pool : fallback.length > 0 ? fallback : allAgents;
+    return pool;
+  }
+
+  function pickAgentFromTeams(role: Role, teamIndex: number, sourceTeams: AssignedPlayer[][]) {
+    const pool = getAgentPool(role, teamIndex, sourceTeams);
+
+    return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : null;
   }
 
   function rollSelectedAgent() {
@@ -273,28 +295,16 @@ export default function ResultPage() {
     const agentPool = getAgentPool(selectedRole, selectedSlot.teamIndex);
     if (agentPool.length === 0) return;
     const startIndex = activeAgentIndexRef.current % agentPool.length;
-    const steps = 18 + Math.floor(Math.random() * 8);
+    const steps = 20 + Math.floor(Math.random() * 7);
     const finalIndex = (startIndex + steps) % agentPool.length;
     const finalAgent = agentPool[finalIndex];
+    const duration = 2450;
 
     setAgentDrafting(true);
     setCurrentAgentPick({ player: { ...targetPlayer, agent: finalAgent.name, role: selectedRole }, teamIndex: selectedSlot.teamIndex });
     setActiveAgentIndex(startIndex);
     activeAgentIndexRef.current = startIndex;
-
-    const spinTimer = window.setInterval(() => {
-      setActiveAgentIndex((index) => {
-        const nextIndex = (index + 1) % agentPool.length;
-        activeAgentIndexRef.current = nextIndex;
-        return nextIndex;
-      });
-    }, 115);
-
-    const stopTimer = window.setTimeout(() => {
-      window.clearInterval(spinTimer);
-      setActiveAgentIndex(finalIndex);
-      activeAgentIndexRef.current = finalIndex;
-    }, steps * 115);
+    setAgentSpinRun({ nonce: Date.now(), startIndex, steps, duration });
 
     const assignTimer = window.setTimeout(() => {
       const nextTeams = displayTeams.map((team, teamIndex) =>
@@ -308,12 +318,45 @@ export default function ResultPage() {
       );
 
       setDisplayTeams(nextTeams);
+      setActiveAgentIndex(finalIndex);
+      activeAgentIndexRef.current = finalIndex;
       setAgentDrafting(false);
       setCurrentAgentPick(null);
+      setAgentSpinRun(null);
       selectNextOpenSlot(selectedSlot, nextTeams);
-    }, steps * 115 + 360);
+    }, duration + 260);
 
-    agentDraftTimersRef.current.push(spinTimer, stopTimer, assignTimer);
+    agentDraftTimersRef.current.push(assignTimer);
+  }
+
+  function fastRollRemaining() {
+    if (agentDrafting) return;
+
+    clearAgentDraftTimers();
+
+    let nextTeams = displayTeams.map((team) => team.map((player) => ({ ...player })));
+    const slots = getDraftSlots(nextTeams);
+
+    slots.forEach((slot) => {
+      const player = nextTeams[slot.teamIndex]?.find((item) => item.id === slot.playerId);
+      if (!player || player.agent) return;
+
+      const agent = pickAgentFromTeams((player.role as Role) || "Random", slot.teamIndex, nextTeams);
+      if (!agent) return;
+      player.agent = agent.name;
+      player.role = (player.role as Role) || "Random";
+      nextTeams = nextTeams.map((team, teamIndex) =>
+        teamIndex === slot.teamIndex
+          ? team.map((item) => (item.id === player.id ? { ...player } : item))
+          : team
+      );
+    });
+
+    setDisplayTeams(nextTeams);
+    setSelectedSlot(null);
+    setCurrentAgentPick(null);
+    setAgentSpinRun(null);
+    setAgentDrafting(false);
   }
 
   function updateSelectedRole(role: Role) {
@@ -331,6 +374,9 @@ export default function ResultPage() {
 
   const teamA = displayTeams[0] ?? [];
   const teamB = displayTeams.length > 1 ? displayTeams[1] : [];
+  const hasTwoTeams = teamB.length > 0;
+  const draftedPlayers = displayTeams.flat();
+  const draftComplete = draftedPlayers.length > 0 && draftedPlayers.every((player) => Boolean(player.agent));
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-valorant-dark px-4 py-6 text-white sm:px-6">
@@ -341,10 +387,16 @@ export default function ResultPage() {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-red-300">Valorant Random Draft</p>
             <h1 className="mt-2 text-2xl font-black uppercase tracking-[0.08em] text-white">
-              {teamNames[0] ?? "Team A"} <span className="text-gray-500">vs</span> {teamNames[1] ?? "Team B"}
+              {hasTwoTeams ? (
+                <>
+                  {teamNames[0] ?? "Team A"} <span className="text-gray-500">vs</span> {teamNames[1] ?? "Team B"}
+                </>
+              ) : (
+                teamNames[0] ?? "Team A"
+              )}
             </h1>
             <p className="mt-2 text-sm text-gray-400">
-              {selectedMap ? `Map: ${selectedMap.name}` : "Roll a map for this lobby"}
+              {selectedMap ? `Map: ${selectedMap.name}` : draftComplete ? "Đội hình đã sẵn sàng" : "Roll a map for this lobby"}
             </p>
           </div>
 
@@ -379,73 +431,102 @@ export default function ResultPage() {
           </div>
         </header>
 
-        <div className="grid gap-5 xl:grid-cols-[270px_minmax(0,1fr)_270px]">
-          <SideRoster
-            title={teamNames[0] ?? "Team A"}
-            side="A"
-            color="red"
-            team={teamA}
-            rolling={rolling}
-            selectedSlot={selectedSlot}
-            onSelect={(playerId) => {
-              if (agentDrafting) return;
-              selectSlot({ teamIndex: 0, playerId });
-            }}
-            getAgentInfoByName={getAgentInfoByName}
-          />
-
-          <section className="panel cut-corners min-h-[680px] p-5">
-            <div className="mb-5 border border-white/10 bg-black/30 p-4 text-center">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-gray-500">Draft Status</p>
-              <h2 className="mt-2 text-lg font-black uppercase tracking-[0.08em] text-white">
-                {agentDrafting ? "Đang quay agent" : selectedSlot ? "Chọn role rồi quay cho người đang chọn" : "Chọn một người chơi"}
-              </h2>
-            </div>
-
-            <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <DuplicateToggle
-                checked={uniqueAgentsInMatch}
-                disabled={agentDrafting}
-                onChange={setUniqueAgentsInMatch}
-              />
-              <RolePicker value={selectedRole} onChange={updateSelectedRole} disabled={!selectedSlot || agentDrafting} />
-            </div>
-
-            <AgentDraftCarousel
-              agents={selectedSlot ? getAgentPool(selectedRole, selectedSlot.teamIndex) : (agentsData as AgentInfo[])}
-              activeIndex={activeAgentIndex}
-              drafting={agentDrafting}
-              currentPick={currentAgentPick}
+        {draftComplete ? (
+          <section className="cut-corners">
+            <FinalMatchSummary
+              teamA={teamA}
+              teamB={teamB}
               teamNames={teamNames}
-              selectedPlayerName={
-                selectedSlot
-                  ? displayTeams[selectedSlot.teamIndex]?.find((player) => player.id === selectedSlot.playerId)?.name
-                  : undefined
-              }
-              selectedRole={selectedRole}
-              onRoll={rollSelectedAgent}
-              canRoll={Boolean(selectedSlot) && !agentDrafting}
+              map={selectedMap}
+              getAgentInfoByName={getAgentInfoByName}
             />
           </section>
-
-          {teams.length > 1 ? (
+        ) : (
+          <div className={hasTwoTeams ? "grid gap-5 xl:grid-cols-[270px_minmax(0,1fr)_270px]" : "grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]"}>
             <SideRoster
-              title={teamNames[1] ?? "Team B"}
-              side="B"
-              color="blue"
-              team={teamB}
+              title={teamNames[0] ?? "Team A"}
+              side="A"
+              color="red"
+              team={teamA}
               rolling={rolling}
               selectedSlot={selectedSlot}
               onSelect={(playerId) => {
                 if (agentDrafting) return;
-                selectSlot({ teamIndex: 1, playerId });
+                selectSlot({ teamIndex: 0, playerId });
               }}
               getAgentInfoByName={getAgentInfoByName}
             />
-          ) : (
-            <MapPanel map={selectedMap} rolling={rollingMap} />
-          )}
-        </div>
+
+            <section className="panel cut-corners min-h-[680px] p-5">
+              <div className="mb-5 border border-white/10 bg-black/30 p-4 text-center">
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-gray-500">Draft Status</p>
+                <h2 className="mt-2 text-lg font-black uppercase tracking-[0.08em] text-white">
+                  {agentDrafting
+                    ? "Đang quay agent"
+                    : selectedSlot
+                      ? "Chọn role rồi quay cho người đang chọn"
+                      : "Chọn một người chơi"}
+                </h2>
+              </div>
+
+                <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <DuplicateToggle
+                    checked={uniqueAgentsInMatch}
+                    disabled={agentDrafting}
+                    onChange={setUniqueAgentsInMatch}
+                  />
+                  <RolePicker
+                    value={selectedRole}
+                    onChange={updateSelectedRole}
+                    disabled={!selectedSlot || agentDrafting}
+                    disabledRoles={
+                      selectedSlot
+                        ? (["Duelist", "Controller", "Sentinel", "Initiator"] as Role[]).filter(
+                            (role) => getAgentPool(role, selectedSlot.teamIndex).length === 0
+                          )
+                        : []
+                    }
+                  />
+                </div>
+
+                <AgentDraftCarousel
+                  agents={selectedSlot ? getAgentPool(selectedRole, selectedSlot.teamIndex) : (agentsData as AgentInfo[])}
+                  activeIndex={activeAgentIndex}
+                  spinRun={agentSpinRun}
+                  drafting={agentDrafting}
+                  currentPick={currentAgentPick}
+                  teamNames={teamNames}
+                  selectedPlayerName={
+                    selectedSlot
+                      ? displayTeams[selectedSlot.teamIndex]?.find((player) => player.id === selectedSlot.playerId)?.name
+                      : undefined
+                  }
+                  selectedRole={selectedRole}
+                  onRoll={rollSelectedAgent}
+                  onFastRoll={fastRollRemaining}
+                  canRoll={Boolean(selectedSlot) && !agentDrafting && (!selectedSlot || getAgentPool(selectedRole, selectedSlot.teamIndex).length > 0)}
+                  canFastRoll={!agentDrafting && draftedPlayers.some((player) => !player.agent)}
+                />
+                {!hasTwoTeams ? <CompactMapPanel map={selectedMap} rolling={rollingMap} /> : null}
+            </section>
+
+            {hasTwoTeams ? (
+              <SideRoster
+                title={teamNames[1] ?? "Team B"}
+                side="B"
+                color="blue"
+                team={teamB}
+                rolling={rolling}
+                selectedSlot={selectedSlot}
+                onSelect={(playerId) => {
+                  if (agentDrafting) return;
+                  selectSlot({ teamIndex: 1, playerId });
+                }}
+                getAgentInfoByName={getAgentInfoByName}
+              />
+            ) : null}
+          </div>
+        )}
       </div>
     </main>
   );
@@ -529,9 +610,6 @@ function SideRoster({
                 <p className="truncate text-xs text-gray-400">{agent ? agent.name : "Chưa chọn agent"}</p>
               </div>
 
-              <span className={`border px-2 py-1 text-[10px] font-black ${color === "red" ? "border-red-400/35" : "border-blue-400/35"}`}>
-                {side}{index + 1}
-              </span>
             </button>
           );
         })}
@@ -540,36 +618,273 @@ function SideRoster({
   );
 }
 
+function FinalMatchSummary({
+  teamA,
+  teamB,
+  teamNames,
+  map,
+  getAgentInfoByName,
+}: {
+  teamA: AssignedPlayer[];
+  teamB: AssignedPlayer[];
+  teamNames: string[];
+  map: MapInfo | null;
+  getAgentInfoByName: (name: string) => AgentInfo | null;
+}) {
+  const hasTwoTeams = teamB.length > 0;
+
+  return (
+    <div className="relative overflow-hidden border border-white/10 bg-[#07080d] p-5 lg:p-7">
+      <div className="absolute inset-0 tactical-grid opacity-25" />
+      <div className="absolute left-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_12%_35%,rgba(255,70,85,0.18),transparent_46%)]" />
+      <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_88%_35%,rgba(74,144,255,0.16),transparent_46%)]" />
+
+      <div className="relative z-10 space-y-6">
+        <div className="grid gap-4 border border-white/10 bg-black/30 p-4 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
+          <div>
+            <div className="mb-4 h-1 w-24 bg-red-500" />
+            <h2 className="text-4xl font-black uppercase leading-none tracking-[0.04em] text-white sm:text-5xl">
+              Match Result
+            </h2>
+            <p className="mt-3 text-lg font-black uppercase tracking-[0.12em] text-gray-300">
+              {hasTwoTeams ? (
+                <>
+                  {teamNames[0] ?? "Team A"} <span className="text-gray-600">vs</span> {teamNames[1] ?? "Team B"}
+                </>
+              ) : (
+                teamNames[0] ?? "Team A"
+              )}
+            </p>
+          </div>
+
+          <div className="overflow-hidden border border-yellow-300/25 bg-yellow-300/[0.04]">
+            {map ? (
+              <div className="relative h-[112px]">
+                <Image src={map.image} alt={map.name} fill sizes="300px" className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/55 to-transparent" />
+                <div className="relative z-10 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-200">Map</p>
+                  <h3 className="mt-2 text-2xl font-black uppercase tracking-[0.04em] text-white">{map.name}</h3>
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-[112px] items-center justify-center p-4 text-center">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-200">Map</p>
+                  <p className="mt-2 text-sm font-semibold text-gray-400">Chưa roll map</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={hasTwoTeams ? "grid gap-4 xl:grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)] xl:items-stretch" : "grid gap-4"}>
+          <FinalTeamPanel
+            title={teamNames[0] ?? "Team A"}
+            color="red"
+            team={teamA}
+            wide={!hasTwoTeams}
+            getAgentInfoByName={getAgentInfoByName}
+          />
+
+          {hasTwoTeams ? (
+            <>
+              <div className="flex items-center justify-center">
+                <div className="flex h-14 w-14 items-center justify-center border border-white/15 bg-black/50 text-sm font-black uppercase tracking-[0.12em] text-gray-400 shadow-2xl xl:h-full xl:w-full">
+                  VS
+                </div>
+              </div>
+
+              <FinalTeamPanel
+                title={teamNames[1] ?? "Team B"}
+                color="blue"
+                team={teamB}
+                getAgentInfoByName={getAgentInfoByName}
+              />
+            </>
+          ) : null}
+            </div>
+      </div>
+    </div>
+  );
+}
+
+function FinalTeamPanel({
+  title,
+  color,
+  team,
+  wide = false,
+  getAgentInfoByName,
+}: {
+  title: string;
+  color: "red" | "blue";
+  team: AssignedPlayer[];
+  wide?: boolean;
+  getAgentInfoByName: (name: string) => AgentInfo | null;
+}) {
+  const accent = color === "red" ? "border-red-400/35 bg-red-500/[0.055]" : "border-blue-400/35 bg-blue-500/[0.055]";
+  const labelColor = color === "red" ? "text-red-300" : "text-blue-300";
+  const lineColor = color === "red" ? "bg-red-400" : "bg-blue-400";
+
+  return (
+    <section className={`relative overflow-hidden border p-4 ${accent}`}>
+      <div className="absolute inset-0 tactical-grid opacity-15" />
+
+      <h3 className={`relative z-10 mb-4 flex items-center justify-between text-base font-black uppercase tracking-[0.14em] ${labelColor}`}>
+        <span className="truncate">{title}</span>
+        <span>{team.length}</span>
+      </h3>
+      <div className={`relative z-10 mb-4 h-px w-full ${lineColor} opacity-60`} />
+
+      <div className={`relative z-10 grid grid-cols-5 ${wide ? "gap-3" : "gap-2"}`}>
+        {team.map((player) => {
+          const agent = getAgentInfoByName(player.agent);
+
+          return (
+            <div
+              key={`${player.id}-${player.agent}`}
+              className="relative min-w-0 overflow-hidden border border-white/10 bg-[#101119]/95 shadow-2xl cut-corners"
+            >
+              <div className={`relative ${wide ? "h-[360px]" : "h-[260px]"}`}>
+                {agent ? (
+                  <Image src={agent.image} alt={agent.name} fill sizes={wide ? "220px" : "120px"} className="object-cover object-top" />
+                ) : null}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/70 p-3">
+                  <p className={`truncate text-[10px] font-black uppercase tracking-[0.16em] ${labelColor}`}>{player.name}</p>
+                  <h4 className="mt-1 truncate text-lg font-black uppercase text-white">{agent?.name ?? "No agent"}</h4>
+                  <div className="mt-2 flex items-center gap-2">
+                    {agent ? <Image src={agent.icon} alt={agent.role} width={14} height={14} /> : null}
+                    <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-gray-400">
+                      {agent?.role ?? "Unknown"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function AgentDraftCarousel({
   agents,
   activeIndex,
+  spinRun,
   drafting,
   currentPick,
   teamNames,
   selectedPlayerName,
   selectedRole,
   onRoll,
+  onFastRoll,
   canRoll,
+  canFastRoll,
 }: {
   agents: AgentInfo[];
   activeIndex: number;
+  spinRun: AgentSpinRun | null;
   drafting: boolean;
   currentPick: AgentDraftPick | null;
   teamNames: string[];
   selectedPlayerName?: string;
   selectedRole: Role;
   onRoll: () => void;
+  onFastRoll: () => void;
   canRoll: boolean;
+  canFastRoll: boolean;
 }) {
+  const reelRef = useRef<HTMLDivElement | null>(null);
   const safeActiveIndex = agents.length > 0 ? activeIndex % agents.length : 0;
-  const visibleCards = agents.map((agent, index) => {
-    let offset = index - safeActiveIndex;
+  const cardOffsets =
+    agents.length >= 5
+      ? [-2, -1, 0, 1, 2]
+      : agents.length === 4
+        ? [-1, 0, 1, 2]
+        : agents.length === 3
+          ? [-1, 0, 1]
+          : agents.length === 2
+            ? [0, 1]
+            : agents.length === 1
+              ? [0]
+              : [];
+  const visibleCards =
+    agents.length === 0
+      ? []
+      : cardOffsets.map((offset) => {
+          const index = (safeActiveIndex + offset + agents.length) % agents.length;
 
-    if (offset > agents.length / 2) offset -= agents.length;
-    if (offset < -agents.length / 2) offset += agents.length;
+          return {
+            agent: agents[index],
+            offset,
+          };
+        });
+  const reelCardWidth = 178;
+  const reelCards =
+    spinRun && agents.length > 0
+      ? Array.from({ length: spinRun.steps + 5 }, (_, position) => {
+          const offset = position - 2;
+          const index = (spinRun.startIndex + offset + agents.length) % agents.length;
 
-    return { agent, offset };
-  });
+          return {
+            agent: agents[index],
+            position,
+          };
+        })
+      : [];
+
+  useEffect(() => {
+    if (!spinRun || !reelRef.current) return;
+
+    const reel = reelRef.current;
+    const cards = Array.from(reel.querySelectorAll<HTMLElement>("[data-reel-card]"));
+    const start = performance.now();
+    const baseOffset = -115 - 2 * reelCardWidth;
+
+    function easeOutCubic(progress: number) {
+      return 1 - Math.pow(1 - progress, 3);
+    }
+
+    function paint(progress: number) {
+      const travelled = spinRun.steps * reelCardWidth * easeOutCubic(progress);
+      const x = baseOffset - travelled;
+
+      reel.style.transform = `translate3d(${x}px, 0, 0)`;
+
+      cards.forEach((card) => {
+        const position = Number(card.dataset.position || 0);
+        const cardCenter = x + position * reelCardWidth + 115;
+        const distance = Math.min(Math.abs(cardCenter) / (reelCardWidth * 2), 1);
+        const scale = 1.08 - distance * 0.28;
+        const y = distance * 22;
+        const opacity = 1 - distance * 0.35;
+        const brightness = 1 - distance * 0.24;
+        const zIndex = Math.round(100 - distance * 60);
+
+        card.style.transform = `translate3d(0, ${y}px, 0) scale(${scale})`;
+        card.style.opacity = `${opacity}`;
+        card.style.filter = `brightness(${brightness})`;
+        card.style.zIndex = `${zIndex}`;
+      });
+    }
+
+    let frame = 0;
+    function tick(now: number) {
+      const progress = Math.min((now - start) / spinRun.duration, 1);
+      paint(progress);
+
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(tick);
+      }
+    }
+
+    paint(0);
+    frame = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [spinRun, reelCardWidth]);
 
   return (
     <div className="relative min-h-[500px] overflow-hidden border border-white/10 bg-black/25 p-5">
@@ -589,51 +904,77 @@ function AgentDraftCarousel({
       <div className="relative mx-auto h-[410px] max-w-3xl overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,70,85,0.16),transparent_62%)]" />
 
-        {visibleCards.map(({ agent, offset }) => {
-          const distance = Math.abs(offset);
-          const visible = distance <= 2;
-          const x = offset * 178;
-          const y = distance === 0 ? 0 : 18;
-          const scale = distance === 0 ? 1 : distance === 1 ? 0.82 : 0.68;
-          const opacity = visible ? (distance === 2 ? 0.18 : 1) : 0;
-          const zIndex = 100 - distance * 20;
-          const isCenter = distance === 0;
+        {spinRun ? (
+          <div
+            key={spinRun.nonce}
+            ref={reelRef}
+            className="absolute left-1/2 top-12 flex h-[320px] will-change-transform"
+            style={{
+              transform: `translate3d(calc(-115px - ${2 * reelCardWidth}px), 0, 0)`,
+            }}
+          >
+            {reelCards.map(({ agent, position }) => {
+              const isStartCenter = position === 2;
+              const isFinalCenter = position === spinRun.steps + 2;
 
-          return (
-            <div
-              key={agent.name}
-              className={`absolute left-1/2 top-12 h-[320px] w-[230px] overflow-hidden border bg-[#101119]/95 shadow-2xl transition-[transform,opacity] duration-500 ease-out cut-corners ${
-                isCenter ? "border-red-400/45" : "border-white/10"
-              }`}
-              style={{
-                opacity,
-                zIndex,
-                transform: `translate3d(calc(-50% + ${x}px), ${y}px, 0) scale(${scale})`,
-                pointerEvents: visible ? "auto" : "none",
-              }}
-            >
-              <Image src={agent.image} alt={agent.name} fill sizes="230px" className="object-cover object-top" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/65 p-4">
-                <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-gray-400">
-                  <Image src={agent.icon} alt={agent.role} width={15} height={15} />
-                  {agent.role}
-                </p>
-                <h3 className="mt-2 text-2xl font-black uppercase text-white">{agent.name}</h3>
+              return (
+                <AgentReelCard
+                  key={`${spinRun.nonce}-${position}-${agent.name}`}
+                  agent={agent}
+                  position={position}
+                  className={`${isStartCenter || isFinalCenter ? "border-red-400/45" : "border-white/10"} ${
+                    position < reelCards.length - 1 ? "-mr-[52px]" : ""
+                  }`}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          visibleCards.map(({ agent, offset }) => {
+            const distance = Math.abs(offset);
+            const x = offset * reelCardWidth;
+            const y = distance === 0 ? 0 : 20;
+            const scale = distance === 0 ? 1 : distance === 1 ? 0.82 : 0.68;
+            const opacity = distance === 2 ? 0.2 : 1;
+            const zIndex = 100 - distance * 20;
+            const isCenter = distance === 0;
+
+            return (
+              <div
+                key={agent.name}
+                className={`absolute left-1/2 top-12 h-[320px] w-[230px] overflow-hidden border bg-[#101119]/95 shadow-2xl transition-[transform,opacity,filter] duration-200 ease-out cut-corners ${
+                  isCenter ? "border-red-400/45" : "border-white/10"
+                }`}
+                style={{
+                  opacity,
+                  zIndex,
+                  transform: `translate3d(calc(-50% + ${x}px), ${y}px, 0) scale(${scale})`,
+                  filter: isCenter ? "brightness(1)" : "brightness(0.72)",
+                  pointerEvents: "none",
+                  backfaceVisibility: "hidden",
+                  transformStyle: "preserve-3d",
+                  willChange: "transform, opacity, filter",
+                }}
+              >
+                <Image src={agent.image} alt={agent.name} fill sizes="230px" className="object-cover object-top" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/65 p-4">
+                  <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-gray-400">
+                    <Image src={agent.icon} alt={agent.role} width={15} height={15} />
+                    {agent.role}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black uppercase text-white">{agent.name}</h3>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
 
         <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#07070a] to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#07070a] to-transparent" />
-        <div className={`absolute bottom-5 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full border border-red-400/30 bg-black/70 shadow-[0_0_34px_rgba(255,70,85,0.22)] ${drafting ? "animate-pulse" : ""}`}>
-          <div className={`absolute inset-3 rounded-full border border-dashed border-red-300/30 ${drafting ? "animate-spin" : ""}`} />
-          <Shuffle className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-red-300" size={24} />
-        </div>
       </div>
 
-      <div className="relative z-10 mt-4 flex justify-center">
+      <div className="relative z-10 mt-4 flex flex-col justify-center gap-3 sm:flex-row">
         <button
           type="button"
           onClick={onRoll}
@@ -643,6 +984,54 @@ function AgentDraftCarousel({
           <Shuffle size={17} />
           Roll Agent
         </button>
+        <button
+          type="button"
+          onClick={onFastRoll}
+          disabled={!canFastRoll}
+          className="flex h-12 items-center justify-center gap-2 border border-blue-400/35 bg-blue-500/10 px-6 text-sm font-black uppercase tracking-[0.08em] text-blue-200 transition hover:bg-blue-500 hover:text-white disabled:border-gray-700 disabled:bg-gray-800 disabled:text-gray-500"
+        >
+          <Shuffle size={17} />
+          Roll nhanh
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AgentReelCard({
+  agent,
+  position,
+  className = "",
+}: {
+  agent: AgentInfo;
+  position: number;
+  className?: string;
+}) {
+  return (
+    <div
+      data-reel-card
+      data-position={position}
+      className={`relative h-[320px] w-[230px] shrink-0 overflow-hidden border bg-[#101119]/95 shadow-2xl cut-corners ${className}`}
+      style={{
+        backfaceVisibility: "hidden",
+        transform: "translateZ(0)",
+        willChange: "transform, opacity, filter",
+      }}
+    >
+      <img
+        src={agent.image}
+        alt={agent.name}
+        loading="eager"
+        decoding="async"
+        className="h-full w-full object-cover object-top"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/65 p-4">
+        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-gray-400">
+          <img src={agent.icon} alt={agent.role} loading="eager" decoding="async" className="h-[15px] w-[15px]" />
+          {agent.role}
+        </p>
+        <h3 className="mt-2 text-2xl font-black uppercase text-white">{agent.name}</h3>
       </div>
     </div>
   );
@@ -675,51 +1064,61 @@ function RolePicker({
   value,
   onChange,
   disabled,
+  disabledRoles,
 }: {
   value: Role;
   onChange: (role: Role) => void;
   disabled: boolean;
+  disabledRoles: Role[];
 }) {
   const roles: Role[] = ["Random", "Duelist", "Controller", "Sentinel", "Initiator"];
 
   return (
     <div className="grid w-full gap-2 sm:grid-cols-5">
-      {roles.map((role) => (
-        <button
-          key={role}
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(role)}
-          className={`h-11 border text-xs font-black uppercase tracking-[0.08em] transition ${
-            value === role
-              ? "border-red-300 bg-red-500 text-white"
-              : "border-white/10 bg-white/[0.035] text-gray-300 hover:border-red-400/50 hover:text-white disabled:text-gray-600"
-          }`}
-        >
-          {role}
-        </button>
-      ))}
+      {roles.map((role) => {
+        const roleDisabled = disabled || disabledRoles.includes(role);
+
+        return (
+          <button
+            key={role}
+            type="button"
+            disabled={roleDisabled}
+            onClick={() => onChange(role)}
+            className={`h-11 border text-xs font-black uppercase tracking-[0.08em] transition ${
+              value === role
+                ? "border-red-300 bg-red-500 text-white disabled:border-red-300/40 disabled:bg-red-500/30"
+                : "border-white/10 bg-white/[0.035] text-gray-300 hover:border-red-400/50 hover:text-white disabled:border-white/5 disabled:bg-black/20 disabled:text-gray-700"
+            }`}
+            title={disabledRoles.includes(role) ? "Role này đã hết agent hợp lệ" : role}
+          >
+            {role}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function MapPanel({ map, rolling }: { map: MapInfo | null; rolling: boolean }) {
+function CompactMapPanel({ map, rolling }: { map: MapInfo | null; rolling: boolean }) {
   return (
-    <aside className="panel cut-corners min-h-[680px] overflow-hidden border-yellow-300/25">
+    <section className="mt-5 overflow-hidden border border-yellow-300/25 bg-yellow-300/[0.04]">
       {map ? (
-        <div className={`relative h-full min-h-[680px] ${rolling ? "opacity-75" : ""}`}>
-          <Image src={map.image} alt={map.name} fill sizes="270px" className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 border-t border-yellow-200/25 bg-black/65 p-5">
+        <div className={`relative min-h-[150px] ${rolling ? "opacity-75" : ""}`}>
+          <Image src={map.image} alt={map.name} fill sizes="900px" className="object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+          <div className="relative z-10 p-5">
             <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-200">Map</p>
-            <h2 className="mt-1 text-3xl font-black uppercase text-white">{map.name}</h2>
+            <h2 className="mt-2 text-3xl font-black uppercase tracking-[0.04em] text-white">{map.name}</h2>
           </div>
         </div>
       ) : (
-        <div className="flex h-full min-h-[680px] items-center justify-center p-6 text-center text-sm text-gray-500">
-          Roll Map
+        <div className="flex min-h-[120px] items-center justify-center p-5 text-center">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-200">Map</p>
+            <p className="mt-2 text-sm font-semibold text-gray-500">Chưa roll map</p>
+          </div>
         </div>
       )}
-    </aside>
+    </section>
   );
 }

@@ -213,9 +213,8 @@ export default function TeamsPage() {
       )}
 
       <div
-        className={`relative z-10 mx-auto grid w-full max-w-[1640px] gap-5 transition-all duration-500 ${
-          inputOpen ? "xl:grid-cols-[420px_minmax(0,1fr)]" : "xl:grid-cols-[minmax(0,1fr)]"
-        }`}
+        className={`relative z-10 mx-auto grid w-full max-w-[1640px] gap-5 transition-all duration-500 ${inputOpen ? "xl:grid-cols-[420px_minmax(0,1fr)]" : "xl:grid-cols-[minmax(0,1fr)]"
+          }`}
       >
         {inputOpen && (
           <InputPanel
@@ -240,7 +239,7 @@ export default function TeamsPage() {
             <div>
               <h1 className="valorant-title text-3xl text-white">{t.matchResult}</h1>
               <p className="mt-2 text-sm text-gray-400">
-                Random theo kiểu lobby: tên được quay ở giữa rồi đưa về từng team.
+
               </p>
             </div>
 
@@ -273,11 +272,10 @@ export default function TeamsPage() {
                 type="button"
                 onClick={randomTeams}
                 disabled={drafting}
-                className={`flex h-11 items-center gap-2 px-4 text-sm font-black uppercase tracking-[0.08em] transition ${
-                  drafting
+                className={`flex h-11 items-center gap-2 px-4 text-sm font-black uppercase tracking-[0.08em] transition ${drafting
                     ? "bg-gray-700 text-gray-300"
                     : "bg-red-500 text-white hover:bg-red-400"
-                }`}
+                  }`}
               >
                 <Shuffle size={17} />
                 {drafting ? t.rolling : t.randomTeam}
@@ -386,13 +384,12 @@ function InputPanel({
         {players.map((p) => (
           <div
             key={p.id}
-            className={`flex items-center justify-between gap-3 border bg-[#14151d] px-4 py-3 transition ${
-              p.lock === "A"
+            className={`flex items-center justify-between gap-3 border bg-[#14151d] px-4 py-3 transition ${p.lock === "A"
                 ? "border-red-500"
                 : p.lock === "B"
                   ? "border-blue-500"
                   : "border-white/10 hover:border-red-400/60"
-            }`}
+              }`}
           >
             <span className="min-w-0 truncate font-semibold">{p.name}</span>
 
@@ -400,9 +397,8 @@ function InputPanel({
               <button
                 type="button"
                 onClick={() => toggleLock(p.id, "A")}
-                className={`h-8 w-8 text-sm font-black transition ${
-                  p.lock === "A" ? "bg-red-600" : "bg-gray-700 hover:bg-gray-600"
-                }`}
+                className={`h-8 w-8 text-sm font-black transition ${p.lock === "A" ? "bg-red-600" : "bg-gray-700 hover:bg-gray-600"
+                  }`}
                 title={`Lock to ${teamAName}`}
               >
                 A
@@ -411,9 +407,8 @@ function InputPanel({
               <button
                 type="button"
                 onClick={() => toggleLock(p.id, "B")}
-                className={`h-8 w-8 text-sm font-black transition ${
-                  p.lock === "B" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"
-                }`}
+                className={`h-8 w-8 text-sm font-black transition ${p.lock === "B" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"
+                  }`}
                 title={`Lock to ${teamBName}`}
               >
                 B
@@ -436,11 +431,10 @@ function InputPanel({
         type="button"
         onClick={randomTeams}
         disabled={drafting}
-        className={`mt-5 flex items-center justify-center gap-2 py-3 font-black uppercase tracking-[0.08em] shadow-lg transition ${
-          drafting
+        className={`mt-5 flex items-center justify-center gap-2 py-3 font-black uppercase tracking-[0.08em] shadow-lg transition ${drafting
             ? "bg-gray-700 text-gray-300"
             : "bg-red-500 text-white hover:bg-red-400"
-        }`}
+          }`}
       >
         <ListPlus size={18} />
         {drafting ? t.rolling : t.randomTeam}
@@ -466,9 +460,8 @@ function SpeedControl({
           type="button"
           disabled={disabled}
           onClick={() => setSpeed(option)}
-          className={`px-3 text-xs font-black uppercase tracking-[0.08em] transition ${
-            speed === option ? "bg-white text-black" : "text-gray-400 hover:bg-white/10 hover:text-white"
-          }`}
+          className={`px-3 text-xs font-black uppercase tracking-[0.08em] transition ${speed === option ? "bg-white text-black" : "text-gray-400 hover:bg-white/10 hover:text-white"
+            }`}
         >
           {option}
         </button>
@@ -548,9 +541,8 @@ function LobbyRandomizer({
             return (
               <div
                 key={cardKey}
-                className={`absolute left-1/2 top-16 h-[168px] w-[292px] border bg-[#101119]/95 px-5 py-5 shadow-2xl transition-[transform,opacity] duration-500 ease-out cut-corners ${
-                  isCenter ? "border-red-400/45" : "border-white/10"
-                }`}
+                className={`absolute left-1/2 top-16 h-[168px] w-[292px] border bg-[#101119]/95 px-5 py-5 shadow-2xl transition-[transform,opacity] duration-500 ease-out cut-corners ${isCenter ? "border-red-400/45" : "border-white/10"
+                  }`}
                 style={{
                   opacity,
                   zIndex,

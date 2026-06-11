@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext } from "react";
 
 export type Language = "en" | "vi";
 
@@ -9,7 +9,7 @@ type LanguageContextValue = {
   setLanguage: (lang: Language) => void;
 };
 
-const defaultLanguage: Language = "en";
+const defaultLanguage: Language = "vi";
 
 const LanguageContext = createContext<LanguageContextValue>({
   language: defaultLanguage,
@@ -59,7 +59,7 @@ export const translations = {
     langLabel: "Language",
     playersPageTitle: "Add Players",
     playersPageHint:
-      "Enter player names and optionally choose roles.\nKeep Random to let the system choose roles.\nSelect 1 Team for one squad, or 2 Teams if players are already split.",
+      "Enter player names only.\nAgent roles can be chosen later on the draft screen.\nSelect 1 Team for one squad, or 2 Teams if players are already split.",
     playersPageTip:
       "Tip: empty names are filled automatically as Player 1, Player 2, and so on.",
     defaultPlayer: "Player",
@@ -112,7 +112,7 @@ export const translations = {
     langLabel: "Ngôn ngữ",
     playersPageTitle: "Thêm người chơi",
     playersPageHint:
-      "Nhập tên người chơi và chọn role nếu muốn.\nGiữ Random để hệ thống tự chọn role.\nChọn 1 Team cho một đội, hoặc 2 Teams nếu người chơi đã được chia sẵn.",
+      "Chỉ nhập tên người chơi ở bước này.\nRole agent có thể chọn sau ở màn hình draft.\nChọn 1 Team cho một đội, hoặc 2 Teams nếu người chơi đã được chia sẵn.",
     playersPageTip:
       "Mẹo: bạn có thể để trống tên, hệ thống sẽ tự đặt như Player 1, Player 2.",
     defaultPlayer: "Player",
@@ -126,18 +126,10 @@ export const translations = {
 } as const;
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => {
-    if (typeof window === "undefined") return defaultLanguage;
-    const stored = window.localStorage.getItem("lang") as Language | null;
-    return stored ?? defaultLanguage;
-  });
-
-  useEffect(() => {
-    window.localStorage.setItem("lang", language);
-    document.documentElement.lang = language === "vi" ? "vi" : "en";
-  }, [language]);
-
-  const value = useMemo(() => ({ language, setLanguage }), [language]);
+  const value: LanguageContextValue = {
+    language: defaultLanguage,
+    setLanguage: () => {},
+  };
 
   return (
     <LanguageContext.Provider value={value}>

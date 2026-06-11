@@ -9,7 +9,7 @@ import { translations, useLanguage } from "../lib/i18n";
 
 export default function Header() {
   const [aboutOpen, setAboutOpen] = useState(false);
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const t = translations[language];
 
   return (
@@ -56,24 +56,6 @@ export default function Header() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-
-          <div className="flex h-11 overflow-hidden border border-white/10 bg-black/30">
-            {(["en", "vi"] as const).map((lang) => (
-              <button
-                key={lang}
-                type="button"
-                onClick={() => setLanguage(lang)}
-                className={`min-w-12 px-4 text-sm font-extrabold uppercase transition ${
-                  language === lang
-                    ? "bg-red-500 text-white"
-                    : "text-gray-300 hover:bg-white/10 hover:text-white"
-                }`}
-                aria-label={`${t.langLabel}: ${lang.toUpperCase()}`}
-              >
-                {lang}
-              </button>
-            ))}
           </div>
 
           <a

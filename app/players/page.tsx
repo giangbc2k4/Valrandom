@@ -2,23 +2,9 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import PlayerCard from "./PlayerBox";
 import { translations, useLanguage } from "../lib/i18n";
-
-interface Role {
-  name: string;
-  icon: string;
-}
-
-const roles: Role[] = [
-  { name: "Duelist", icon: "/Roles/Du.png" },
-  { name: "Initiator", icon: "/Roles/Ini.png" },
-  { name: "Sentinel", icon: "/Roles/Sen.png" },
-  { name: "Controller", icon: "/Roles/Col.png" },
-  { name: "Random", icon: "/Roles/random.png" },
-];
 
 function PlayersContent() {
   const router = useRouter();
@@ -26,8 +12,8 @@ function PlayersContent() {
   const t = translations[language];
 
   const [teamCount, setTeamCount] = useState<1 | 2>(1);
+  const [teamNames, setTeamNames] = useState(["Team A", "Team B"]);
   const [players, setPlayers] = useState<string[]>(Array(10).fill(""));
-  const [playerRoles, setPlayerRoles] = useState<string[]>(Array(10).fill("Random"));
   const searchParams = useSearchParams();
   const [prefilled, setPrefilled] = useState(false);
 
@@ -40,6 +26,7 @@ function PlayersContent() {
     try {
       const decoded = JSON.parse(decodeURIComponent(data)) as {
         teams?: Array<Array<{ name: string }>>;
+        teamNames?: string[];
       };
 
       if (!decoded.teams || !Array.isArray(decoded.teams)) return;
@@ -56,7 +43,12 @@ function PlayersContent() {
       });
 
       setPlayers(filled);
-      setPlayerRoles(Array(10).fill("Random"));
+      if (decoded.teamNames?.length) {
+        setTeamNames([
+          decoded.teamNames[0] || "Team A",
+          decoded.teamNames[1] || "Team B",
+        ]);
+      }
       setTeamCount(teamB.length > 0 ? 2 : 1);
       setPrefilled(true);
     } catch {
@@ -71,10 +63,11 @@ function PlayersContent() {
       .slice(0, totalPlayers)
       .map((p, i) => p.trim() || `${t.defaultPlayer} ${i + 1}`);
 
-    const finalRoles = playerRoles.slice(0, totalPlayers);
+    const finalRoles = Array(totalPlayers).fill("Random");
 
     localStorage.setItem("players", JSON.stringify(finalPlayers));
     localStorage.setItem("roles", JSON.stringify(finalRoles));
+    localStorage.setItem("teamNames", JSON.stringify(teamNames.slice(0, teamCount)));
 
     router.push("/result");
   };
@@ -88,7 +81,7 @@ function PlayersContent() {
     <main className="relative min-h-screen overflow-hidden bg-valorant-dark px-4 py-8 text-white sm:px-6">
       <div className="absolute inset-0 tactical-grid opacity-35" />
 
-      <div className="relative z-10 mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="relative z-10 mx-auto max-w-5xl">
         <section className="panel cut-corners p-5 sm:p-6">
           <div className="mb-6 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 md:flex-row md:items-end">
             <div>
@@ -132,12 +125,35 @@ function PlayersContent() {
                       teamIdx === 0 ? "text-red-300" : "text-blue-300"
                     }`}
                   >
-                    {teamIdx === 0 ? t.teamA : t.teamB}
+                    {teamNames[teamIdx] || (teamIdx === 0 ? t.teamA : t.teamB)}
                   </h2>
                   <span className="text-xs font-bold text-gray-400">
                     {teamPlayers.filter(Boolean).length}/5
                   </span>
                 </div>
+
+                <label className="mb-4 block">
+                  <span className="mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-gray-500">
+                    Team name
+                  </span>
+                  <input
+                    type="text"
+                    value={teamNames[teamIdx] ?? ""}
+                    onChange={(event) =>
+                      setTeamNames((prev) => {
+                        const next = [...prev];
+                        next[teamIdx] = event.target.value;
+                        return next;
+                      })
+                    }
+                    placeholder={teamIdx === 0 ? t.teamA : t.teamB}
+                    className={`w-full border bg-[#101119] px-3 py-2.5 text-sm font-black uppercase tracking-[0.06em] text-white outline-none transition placeholder:text-gray-600 ${
+                      teamIdx === 0
+                        ? "border-red-400/25 focus:border-red-300"
+                        : "border-blue-400/25 focus:border-blue-300"
+                    }`}
+                  />
+                </label>
 
                 <div className="space-y-3">
                   {teamPlayers.map((p, idx) => {
@@ -147,18 +163,9 @@ function PlayersContent() {
                       <PlayerCard
                         key={globalIdx}
                         player={players[globalIdx]}
-                        role={playerRoles[globalIdx]}
                         placeholder={t.placeholderPlayer}
-                        roles={roles}
                         onChange={(val) =>
                           setPlayers((prev) => {
-                            const newArr = [...prev];
-                            newArr[globalIdx] = val;
-                            return newArr;
-                          })
-                        }
-                        onRoleChange={(val) =>
-                          setPlayerRoles((prev) => {
                             const newArr = [...prev];
                             newArr[globalIdx] = val;
                             return newArr;
@@ -184,30 +191,6 @@ function PlayersContent() {
             </button>
           </div>
         </section>
-
-        <aside className="panel-strong cut-corners h-fit p-5">
-          <h2 className="valorant-title text-xl text-white">{t.roleGuideTitle}</h2>
-          <p className="mt-3 text-sm leading-6 text-gray-400">{t.roleGuideHint}</p>
-
-          <div className="mt-5 space-y-2">
-            {roles.map((role) => (
-              <div key={role.name} className="flex items-center gap-3 border border-white/10 bg-black/30 px-3 py-3">
-                <Image
-                  src={role.icon}
-                  alt={role.name}
-                  width={28}
-                  height={28}
-                  className={role.name === "Random" ? "rounded-full bg-white/15 p-1" : ""}
-                />
-                <span className="font-semibold text-gray-200">{role.name}</span>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-5 border-l-2 border-red-400 pl-4 text-xs leading-5 text-gray-500">
-            {t.roleRandomNote}
-          </p>
-        </aside>
       </div>
     </main>
   );
