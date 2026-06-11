@@ -22,6 +22,8 @@ type DraftPick = {
 
 type Speed = "slow" | "normal" | "fast";
 
+type TranslationText = (typeof translations)[keyof typeof translations];
+
 const speedConfig: Record<Speed, { step: number; stopAfter: number; landAfter: number }> = {
   slow: { step: 520, stopAfter: 3200, landAfter: 4000 },
   normal: { step: 360, stopAfter: 2400, landAfter: 3150 },
@@ -335,7 +337,7 @@ function InputPanel({
   toggleLock: (id: number, team: TeamLock) => void;
   randomTeams: () => void;
   drafting: boolean;
-  t: typeof translations.en;
+  t: TranslationText;
 }) {
   return (
     <section className="panel cut-corners flex h-[calc(100vh-190px)] min-h-[560px] flex-col p-5">

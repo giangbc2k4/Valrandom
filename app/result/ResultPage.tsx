@@ -838,6 +838,7 @@ function AgentDraftCarousel({
   useEffect(() => {
     if (!spinRun || !reelRef.current) return;
 
+    const run = spinRun;
     const reel = reelRef.current;
     const cards = Array.from(reel.querySelectorAll<HTMLElement>("[data-reel-card]"));
     const start = performance.now();
@@ -848,7 +849,7 @@ function AgentDraftCarousel({
     }
 
     function paint(progress: number) {
-      const travelled = spinRun.steps * reelCardWidth * easeOutCubic(progress);
+      const travelled = run.steps * reelCardWidth * easeOutCubic(progress);
       const x = baseOffset - travelled;
 
       reel.style.transform = `translate3d(${x}px, 0, 0)`;
@@ -872,7 +873,7 @@ function AgentDraftCarousel({
 
     let frame = 0;
     function tick(now: number) {
-      const progress = Math.min((now - start) / spinRun.duration, 1);
+      const progress = Math.min((now - start) / run.duration, 1);
       paint(progress);
 
       if (progress < 1) {
@@ -1018,17 +1019,11 @@ function AgentReelCard({
         willChange: "transform, opacity, filter",
       }}
     >
-      <img
-        src={agent.image}
-        alt={agent.name}
-        loading="eager"
-        decoding="async"
-        className="h-full w-full object-cover object-top"
-      />
+      <Image src={agent.image} alt={agent.name} fill sizes="230px" className="object-cover object-top" />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/65 p-4">
         <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-gray-400">
-          <img src={agent.icon} alt={agent.role} loading="eager" decoding="async" className="h-[15px] w-[15px]" />
+          <Image src={agent.icon} alt={agent.role} width={15} height={15} />
           {agent.role}
         </p>
         <h3 className="mt-2 text-2xl font-black uppercase text-white">{agent.name}</h3>
