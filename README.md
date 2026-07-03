@@ -1,18 +1,18 @@
 # Valrandom
 
-Next.js app for randomizing players, assigning teams, and showing animated results. It is designed as a small interactive tool with a visual UI, music player, and multilingual text support.
+Ứng dụng Next.js dùng để xáo trộn người chơi, chia đội và hiển thị kết quả có hiệu ứng. Giao diện có trình phát nhạc và hỗ trợ nội dung đa ngôn ngữ.
 
-## Features
+## Tính năng
 
-- Player entry and management.
-- Random team assignment logic.
-- Result screen for generated teams.
-- Agent/team assignment helpers.
-- Header and music player components.
-- Internationalization helper.
-- Animated UI with Framer Motion and particles.
+- Nhập và quản lý người chơi.
+- Logic chia đội ngẫu nhiên.
+- Màn hình hiển thị kết quả chia đội.
+- Tiện ích gán agent/đội.
+- Component header và trình phát nhạc.
+- Tiện ích đa ngôn ngữ.
+- Hiệu ứng Framer Motion và particles.
 
-## Tech Stack
+## Công nghệ
 
 - Next.js 15
 - React 19
@@ -22,7 +22,7 @@ Next.js app for randomizing players, assigning teams, and showing animated resul
 - lucide-react
 - tsparticles
 
-## Project Structure
+## Cấu trúc dự án
 
 ```text
 app/page.tsx                 Main app screen
@@ -35,16 +35,16 @@ app/lib/i18n.tsx             Text/localization helper
 app/components/              Shared UI components
 ```
 
-## Getting Started
+## Cài đặt và chạy
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Mở `http://localhost:3000`.
 
-## Scripts
+## Lệnh npm
 
 ```bash
 npm run dev
@@ -53,20 +53,20 @@ npm run start
 npm run lint
 ```
 
-## Roadmap
+## Hướng phát triển
 
-- Add screenshots or a demo GIF.
-- Document the exact randomization rules.
-- Rename the package from `my-app` to `valrandom`.
+- Bổ sung ảnh màn hình hoặc GIF demo.
+- Tài liệu hóa chính xác quy tắc ngẫu nhiên.
+- Đổi tên package từ `my-app` thành `valrandom`.
 
-## User flow and domain logic
+## Luồng người dùng và logic nghiệp vụ
 
 The landing page leads to player entry, team configuration and the result screen. Keep randomization in `app/lib/teamRandomizer.ts` and agent assignment in `assignAgents.ts`; UI components should not duplicate those rules. Agent/map metadata and matching assets must use stable, consistent IDs.
 
-## Fairness rules to document
+## Quy tắc công bằng cần tài liệu hóa
 
-Clarify minimum/maximum players, odd player handling, whether agents may repeat, whether roles must balance and how maps are selected. A shuffle is random but not necessarily skill-balanced. If results must be reproducible, add a seed and display it on the result page.
+Cần nêu rõ số người tối thiểu/tối đa, cách xử lý số người lẻ, agent có được trùng không, role có cần cân bằng không và cách chọn map. Shuffle tạo kết quả ngẫu nhiên nhưng không đồng nghĩa cân bằng kỹ năng. Nếu cần tái tạo kết quả, hãy thêm seed và hiển thị seed ở trang kết quả.
 
-## Testing and production
+## Kiểm thử và production
 
-Test 0/1 players, odd counts, duplicate names, more teams than players, missing assets and direct refresh of `/result` without prior state. Verify mobile layout, reduced-motion preference and browsers that block audio autoplay. Before publishing, run lint/build, optimize large images and confirm licensing for Valorant imagery/audio. Use URL/localStorage if results should survive refresh or be shareable.
+Kiểm thử 0/1 người chơi, số lượng lẻ, tên trùng, số đội nhiều hơn người, thiếu asset và refresh trực tiếp `/result` khi chưa có state. Kiểm tra mobile, reduced-motion và trình duyệt chặn audio autoplay. Trước khi công khai, chạy lint/build, tối ưu ảnh lớn và xác nhận quyền sử dụng hình/âm thanh Valorant. Dùng URL/localStorage nếu muốn kết quả tồn tại sau refresh hoặc có thể chia sẻ.
