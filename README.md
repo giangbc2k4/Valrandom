@@ -58,3 +58,15 @@ npm run lint
 - Add screenshots or a demo GIF.
 - Document the exact randomization rules.
 - Rename the package from `my-app` to `valrandom`.
+
+## User flow and domain logic
+
+The landing page leads to player entry, team configuration and the result screen. Keep randomization in `app/lib/teamRandomizer.ts` and agent assignment in `assignAgents.ts`; UI components should not duplicate those rules. Agent/map metadata and matching assets must use stable, consistent IDs.
+
+## Fairness rules to document
+
+Clarify minimum/maximum players, odd player handling, whether agents may repeat, whether roles must balance and how maps are selected. A shuffle is random but not necessarily skill-balanced. If results must be reproducible, add a seed and display it on the result page.
+
+## Testing and production
+
+Test 0/1 players, odd counts, duplicate names, more teams than players, missing assets and direct refresh of `/result` without prior state. Verify mobile layout, reduced-motion preference and browsers that block audio autoplay. Before publishing, run lint/build, optimize large images and confirm licensing for Valorant imagery/audio. Use URL/localStorage if results should survive refresh or be shareable.
